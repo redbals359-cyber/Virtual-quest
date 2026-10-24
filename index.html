@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cultural Quest VR</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #242720;
+  color: #f5f0e5;
+  font-family: Arial, sans-serif;
+}
+
+canvas {
+  display: block;
+  touch-action: none;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#topbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  color: #f5f0e5;
+  font-size: 12px;
+  letter-spacing: 2px;
+  font-weight: bold;
+  text-shadow: 0 2px 8px #000;
+}
+
+.top-button {
+  border: 1px solid rgba(226, 210, 174, .55);
+  border-radius: 6px;
+  background: rgba(30, 32, 27, .78);
+  color: #fff8e8;
+  padding: 10px 12px;
+  font-size: 12px;
+  pointer-events: auto;
+}
+
+#topActions {
+  display: flex;
+  gap: 7px;
+}
+
+#hint {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 12px;
+  background: rgba(24, 25, 21, .55);
+  border-radius: 20px;
+  color: #e9e0ce;
+  font-size: 11px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#controls {
+  position: absolute;
+  left: 14px;
+  bottom: 20px;
+  display: grid;
+  grid-template-columns: 49px 49px 49px;
+  grid-template-rows: 45px 45px;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+.move {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(237, 221, 188, .45);
+  border-radius: 9px;
+  color: #fff7e6;
+  background: rgba(30, 32, 27, .65);
+  font-size: 19px;
+  user-select: none;
+}
+
+.move:active {
+  background: rgba(151, 121, 70, .9);
+}
+
+#forward { grid-column: 2; grid-row: 1; }
+#left { grid-column: 1; grid-row: 2; }
+#backward { grid-column: 2; grid-row: 2; }
+#right { grid-column: 3; grid-row: 2; }
+
+#interact {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid #d7bd86;
+  border-radius: 7px;
+  background: #79613b;
+  color: white;
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: bold;
+  display: none;
+  pointer-events: auto;
+  max-width: 50%;
+}
+
+#progress {
+  position: absolute;
+  right: 14px;
+  bottom: 22px;
+  font-size: 11px;
+  color: #f1e6cf;
+  text-shadow: 0 2px 5px black;
+}
+
+#intro {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 22, 18, .88);
+}
+
+#introBox {
+  width: min(380px, 100%);
+  padding: 28px 24px;
+  text-align: center;
+  background: #272b24;
+  border: 1px solid #81714e;
+}
+
+#introBox h1 {
+  margin: 0 0 8px;
+  font-size: 25px;
+  letter-spacing: 1px;
+  color: #e5cf9f;
+}
+
+#introBox p {
+  color: #d7d3c8;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+#start {
+  width: 100%;
+  padding: 13px;
+  margin-top: 12px;
+  border: none;
+  background: #b0915b;
+  color: white;
+  font-weight: bold;
+}
+
+#modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.72);
+}
+
+#card {
+  width: min(440px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 20px;
+  background: #f0eadc;
+  color: #28271f;
+  border-radius: 4px;
+  box-shadow: 0 12px 50px #0008;
+}
+
+#card h2 {
+  margin: 0 0 14px;
+  font-family: Georgia, serif;
+  font-size: 23px;
+}
+
+#objectImage {
+  width: 100%;
+  height: 190px;
+  object-fit: contain;
+  background: #ded8c9;
+  margin-bottom: 18px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #81683f;
+  margin-bottom: 5px;
+}
+
+.info {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0 0 15px;
+}
+
+#close {
+  width: 100%;
+  border: none;
+  background: #343d31;
+  color: white;
+  padding: 12px;
+  margin-top: 5px;
+}
+
+#loading {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #242720;
+  color: #eee3ca;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  #controls {
+    left: 10px;
+    bottom: 14px;
+    grid-template-columns: 43px 43px 43px;
+    grid-template-rows: 41px 41px;
+    gap: 4px;
+  }
+
+  .move {
+    font-size: 17px;
+  }
+
+  #progress {
+    right: 10px;
+    bottom: 15px;
+    font-size: 10px;
+  }
+
+  #interact {
+    bottom: 115px;
+    font-size: 11px;
+    padding: 11px 13px;
+  }
+
+  #hint {
+    top: 54px;
+    font-size: 10px;
+  }
+
+  .brand {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .top-button {
+    font-size: 11px;
+    padding: 9px;
+  }
+
+  #objectImage {
+    height: 160px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="loading">Menyiapkan museum...</div>
+
+<div id="ui">
+  <div id="topbar">
+    <div class="brand">CULTURAL QUEST</div>
+
+    <div id="topActions">
+      <button class="top-button" id="back">← Back</button>
+      <button class="top-button" id="fullscreen">Fullscreen</button>
+    </div>
+  </div>
+
+  <div id="hint">Geser layar untuk melihat sekeliling</div>
+  <div id="crosshair"></div>
+
+  <div id="controls">
+    <button class="move" id="forward" aria-label="Maju">▲</button>
+    <button class="move" id="left" aria-label="Kiri">◀</button>
+    <button class="move" id="backward" aria-label="Mundur">▼</button>
+    <button class="move" id="right" aria-label="Kanan">▶</button>
+  </div>
+
+  <button id="interact">Lihat Informasi</button>
+  <div id="progress">Objek: 0/3</div>
+</div>
+
+<div id="intro">
+  <div id="introBox">
+    <h1>Cultural Quest</h1>
+    <p>
+      Jelajahi museum virtual dan kenali warisan budaya
+      Candi Lemah Duwur melalui tiga objek pameran.
+    </p>
+    <p>
+      <b>HP:</b> tombol arah di kiri, geser sisi kanan layar untuk melihat.<br>
+      <b>Komputer:</b> WASD atau tombol panah, klik dan geser mouse untuk melihat.
+    </p>
+    <button id="start">MASUK MUSEUM</button>
+  </div>
+</div>
+
+<div id="modal">
+  <div id="card">
+    <h2 id="title"></h2>
+    <img id="objectImage" alt="Objek pameran">
+
+    <div class="label">Keunikan</div>
+    <p class="info" id="uniqueness"></p>
+
+    <div class="label">Nilai Sejarah</div>
+    <p class="info" id="history"></p>
+
+    <div class="label">Fakta Menarik</div>
+    <p class="info" id="fact"></p>
+
+    <button id="close">Kembali ke Museum</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+import { VRButton } from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js";
+
+// ===================================================
+// DATA PAMERAN
+// ===================================================
+
+const exhibits = [
+  {
+    title: "Candi Lemah Duwur",
+    image: "https://raw.githubusercontent.com/redbals359-cyber/culturalquest/main/Candi%20lemah%20duwur%20.png",
+    uniqueness: "Gundukan tanah yang lebih tinggi daripada area sekitarnya menjadi ciri khas situs ini.",
+    history: "Bentuk permukaan tanah dan reruntuhan candi dapat membantu mengkaji perkembangan situs pada masa kerajaan.",
+    fact: "Lemah Dhuwur berarti ‘tanah tinggi’, tetapi asal-usul gundukan tersebut masih perlu diteliti lebih lanjut.",
+    x: -5,
+    z: -3
+  },
+  {
+    title: "Bata Merah",
+    image: "https://raw.githubusercontent.com/redbals359-cyber/culturalquest/main/Batu%20bata.png",
+    uniqueness: "Menggunakan bata merah berukuran sekitar 37 × 24 × 10 cm, lebih besar daripada bata modern pada umumnya.",
+    history: "Menunjukkan pemanfaatan tanah liat dalam perkembangan teknologi bangunan masa lampau.",
+    fact: "Susunan bata kuno menjadi petunjuk untuk mempelajari teknik konstruksi sebelum penggunaan semen modern.",
+    x: 0,
+    z: -3
+  },
+  {
+    title: "Struktur Bangunan Candi Lemah Duwur",
+    image: "https://raw.githubusercontent.com/redbals359-cyber/culturalquest/main/Struktur%20bangunan%20.png",
+    uniqueness: "Berdiri di atas gundukan tanah di tengah persawahan Desa Pamotan, Porong, dengan reruntuhan yang dinaungi pohon beringin besar.",
+    history: "Sisa bangunan dan batu lingga menjadi petunjuk untuk mengkaji sejarah serta tradisi keagamaan masa lampau.",
+    fact: "Meski sebagian besar bangunannya telah runtuh, sisa fondasinya masih menyimpan jejak arsitektur kuno.",
+    x: 5,
+    z: -3
+  }
+];
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xaaa99b);
+scene.fog = new THREE.Fog(0xaaa99b, 22, 45);
+
+const camera = new THREE.PerspectiveCamera(
+  72,
+  innerWidth / innerHeight,
+  0.1,
+  100
+);
+
+camera.position.set(0, 1.65, 8);
+camera.rotation.order = "YXZ";
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  powerPreference: "high-performance"
+});
+
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.xr.enabled = true;
+
+document.body.appendChild(renderer.domElement);
+
+// Tombol headset VR akan muncul jika browser mendukung WebXR.
+const vrButton = VRButton.createButton(renderer);
+vrButton.style.position = "fixed";
+vrButton.style.left = "50%";
+vrButton.style.bottom = "10px";
+vrButton.style.transform = "translateX(-50%)";
+vrButton.style.zIndex = "5";
+vrButton.style.fontSize = "12px";
+document.body.appendChild(vrButton);
+
+// ===================================================
+// PENCAHAYAAN
+// ===================================================
+
+scene.add(new THREE.HemisphereLight(0xf4ead7, 0x55554a, 2));
+
+const ceilingLight = new THREE.DirectionalLight(0xffe7c4, 2.2);
+ceilingLight.position.set(0, 8, 3);
+scene.add(ceilingLight);
+
+// ===================================================
+// MATERIAL MUSEUM
+// ===================================================
+
+const floorMat = new THREE.MeshStandardMaterial({
+  color: 0xb6b09e,
+  roughness: 0.8
+});
+
+const wallMat = new THREE.MeshStandardMaterial({
+  color: 0xe0d9c8,
+  roughness: 0.9
+});
+
+const darkWood = new THREE.MeshStandardMaterial({
+  color: 0x493c2c,
+  roughness: 0.7
+});
+
+const gold = new THREE.MeshStandardMaterial({
+  color: 0x998052,
+  metalness: 0.25,
+  roughness: 0.55
+});
+
+const darkMat = new THREE.MeshStandardMaterial({
+  color: 0x292b26,
+  roughness: 0.8
+});
+
+function box(w, h, d, material, x, y, z) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    material
+  );
+
+  mesh.position.set(x, y, z);
+  scene.add(mesh);
+  return mesh;
+}
+
+// ===================================================
+// RUANG MUSEUM
+// ===================================================
+
+// Lantai
+box(23, 0.3, 29, floorMat, 0, -0.16, -1);
+
+// Dinding
+box(23, 6, 0.4, wallMat, 0, 3, -15);
+box(0.4, 6, 29, wallMat, -11.5, 3, -1);
+box(0.4, 6, 29, wallMat, 11.5, 3, -1);
+
+// Dinding depan dengan pintu masuk terbuka
+box(7, 6, 0.4, wallMat, -8, 3, 13);
+box(7, 6, 0.4, wallMat, 8, 3, 13);
+box(9, 1, 0.4, wallMat, 0, 5.5, 13);
+
+// Plafon
+box(23, 0.25, 29, darkMat, 0, 6.1, -1);
+
+// Lis dinding
+box(22.7, 0.12, 0.12, gold, 0, 5.3, -14.72);
+box(22.7, 0.12, 0.12, gold, 0, 0.25, -14.72);
+
+// Garis ubin lantai
+const tileMat = new THREE.MeshStandardMaterial({
+  color: 0x8e897a,
+  roughness: 0.9
+});
+
+for (let x = -10; x <= 10; x += 2) {
+  box(0.025, 0.008, 28, tileMat, x, 0.002, -1);
+}
+
+for (let z = -14; z <= 12; z += 2) {
+  box(22, 0.008, 0.025, tileMat, 0, 0.003, z);
+}
+
+// Pintu masuk dan lis pintu
+box(0.18, 5, 0.18, darkWood, -4.6, 2.5, 12.72);
+box(0.18, 5, 0.18, darkWood, 4.6, 2.5, 12.72);
+box(9.4, 0.18, 0.18, darkWood, 0, 5, 12.72);
+
+// ===================================================
+// PAPAN TEKS DI DINDING
+// ===================================================
+
+function makeTextTexture(text, width = 1024, height = 256) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#383b31";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "#e6d3a4";
+  ctx.font = "bold 66px Georgia";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, width / 2, height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const sign = new THREE.Mesh(
+  new THREE.PlaneGeometry(7, 1.75),
+  new THREE.MeshBasicMaterial({
+    map: makeTextTexture("CULTURAL QUEST")
+  })
+);
+
+sign.position.set(0, 4.5, -14.73);
+scene.add(sign);
+
+// ===================================================
+// AREA PAMERAN
+// ===================================================
+
+const textureLoader = new THREE.TextureLoader();
+const displayPanels = [];
+
+function createExhibit(data) {
+  const x = data.x;
+  const z = data.z;
+
+  // Bingkai kayu
+  box(2.75, 3.05, 0.2, darkWood, x, 2.75, z - 0.25);
+
+  // Latar panel
+  box(2.53, 2.83, 0.07, gold, x, 2.75, z - 0.13);
+
+  // Bidang gambar
+  const picture = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.36, 2.66),
+    new THREE.MeshBasicMaterial({ color: 0xd0c9b7 })
+  );
+
+  picture.position.set(x, 2.75, z - 0.085);
+  picture.userData.exhibit = data;
+  scene.add(picture);
+  displayPanels.push(picture);
+
+  // Alas pajangan di depan panel
+  box(2.1, 0.22, 1.2, darkWood, x, 0.14, z + 0.85);
+  box(1.9, 0.12, 1.0, gold, x, 0.3, z + 0.85);
+
+  // Lampu sorot
+  const spot = new THREE.SpotLight(
+    0xffe5bd,
+    30,
+    9,
+    Math.PI / 5,
+    0.6,
+    1
+  );
+
+  spot.position.set(x, 5.2, z + 2);
+  spot.target.position.set(x, 2, z);
+  scene.add(spot);
+  scene.add(spot.target);
+
+  // Label kecil pada alas
+  const labelTexture = makeTextTexture(
+    data.title.toUpperCase(),
+    1024,
+    180
+  );
+
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.8, 0.32),
+    new THREE.MeshBasicMaterial({ map: labelTexture })
+  );
+
+  label.position.set(x, 0.43, z + 1.36);
+  label.rotation.x = -0.15;
+  scene.add(label);
+
+  // Muat foto objek
+  textureLoader.load(
+    data.image,
+    texture => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      picture.material = new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.DoubleSide
+      });
+    },
+    undefined,
+    () => console.warn("Gambar tidak dapat dimuat:", data.title)
+  );
+}
+
+exhibits.forEach(createExhibit);
+
+// Lampu plafon
+for (const x of [-6, 0, 6]) {
+  for (const z of [-10, -3, 4]) {
+    box(1.4, 0.08, 0.5, gold, x, 5.94, z);
+
+    const light = new THREE.PointLight(0xffe6c1, 10, 9);
+    light.position.set(x, 5.6, z);
+    scene.add(light);
+  }
+}
+
+// ===================================================
+// KONTROL GERAK
+// ===================================================
+
+const keys = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false
+};
+
+const keyMap = {
+  KeyW: "forward",
+  ArrowUp: "forward",
+  KeyS: "backward",
+  ArrowDown: "backward",
+  KeyA: "left",
+  ArrowLeft: "left",
+  KeyD: "right",
+  ArrowRight: "right"
+};
+
+window.addEventListener("keydown", event => {
+  if (keyMap[event.code]) {
+    keys[keyMap[event.code]] = true;
+    event.preventDefault();
+  }
+
+  if (event.code === "KeyE") openNearby();
+  if (event.code === "Escape") closeModal();
+});
+
+window.addEventListener("keyup", event => {
+  if (keyMap[event.code]) {
+    keys[keyMap[event.code]] = false;
+  }
+});
+
+function bindMove(id, direction) {
+  const button = document.getElementById(id);
+
+  button.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    keys[direction] = true;
+    button.setPointerCapture?.(event.pointerId);
+  });
+
+  const stop = event => {
+    event.preventDefault();
+    keys[direction] = false;
+  };
+
+  button.addEventListener("pointerup", stop);
+  button.addEventListener("pointercancel", stop);
+  button.addEventListener("lostpointercapture", () => {
+    keys[direction] = false;
+  });
+}
+
+bindMove("forward", "forward");
+bindMove("backward", "backward");
+bindMove("left", "left");
+bindMove("right", "right");
+
+// ===================================================
+// MEMUTAR PANDANGAN
+// ===================================================
+
+let yaw = 0;
+let pitch = 0;
+let dragging = false;
+let previousX = 0;
+let previousY = 0;
+
+renderer.domElement.addEventListener("pointerdown", event => {
+  if (!started || modalOpen()) return;
+
+  // Di HP, geser sisi kanan layar untuk memutar pandangan.
+  if (event.pointerType !== "mouse" &&
+      event.clientX < innerWidth * 0.35) return;
+
+  dragging = true;
+  previousX = event.clientX;
+  previousY = event.clientY;
+
+  renderer.domElement.setPointerCapture?.(event.pointerId);
+});
+
+renderer.domElement.addEventListener("pointermove", event => {
+  if (!dragging || renderer.xr.isPresenting) return;
+
+  const dx = event.clientX - previousX;
+  const dy = event.clientY - previousY;
+
+  previousX = event.clientX;
+  previousY = event.clientY;
+
+  const sensitivity = event.pointerType === "mouse" ? 0.004 : 0.006;
+
+  yaw -= dx * sensitivity;
+  pitch -= dy * sensitivity;
+
+  pitch = THREE.MathUtils.clamp(pitch, -1.15, 1.15);
+
+  camera.rotation.set(pitch, yaw, 0, "YXZ");
+});
+
+function stopLook() {
+  dragging = false;
+}
+
+renderer.domElement.addEventListener("pointerup", stopLook);
+renderer.domElement.addEventListener("pointercancel", stopLook);
+renderer.domElement.addEventListener("lostpointercapture", stopLook);
+
+// ===================================================
+// INTERAKSI PAMERAN
+// ===================================================
+
+const modal = document.getElementById("modal");
+const interactButton = document.getElementById("interact");
+const progressText = document.getElementById("progress");
+
+let started = false;
+let nearby = null;
+const visited = new Set();
+
+function modalOpen() {
+  return modal.style.display === "flex";
+}
+
+function updateProgress() {
+  progressText.textContent = `Objek: ${visited.size}/3`;
+}
+
+function openExhibit(data) {
+  if (!data) return;
+
+  document.getElementById("title").textContent = data.title;
+
+  const image = document.getElementById("objectImage");
+  image.src = data.image;
+  image.alt = data.title;
+
+  document.getElementById("uniqueness").textContent = data.uniqueness;
+  document.getElementById("history").textContent = data.history;
+  document.getElementById("fact").textContent = data.fact;
+
+  modal.style.display = "flex";
+
+  visited.add(data.title);
+  updateProgress();
+}
+
+function openNearby() {
+  if (nearby) openExhibit(nearby);
+}
+
+function closeModal() {
+  modal.style.display = "none";
+}
+
+interactButton.addEventListener("click", openNearby);
+document.getElementById("close").addEventListener("click", closeModal);
+
+modal.addEventListener("click", event => {
+  if (event.target === modal) closeModal();
+});
+
+// ===================================================
+// GERAK DAN JARAK INTERAKSI
+// ===================================================
+
+const clock = new THREE.Clock();
+const forward = new THREE.Vector3();
+const right = new THREE.Vector3();
+
+function updateMovement(delta) {
+  if (!started || modalOpen() || renderer.xr.isPresenting) return;
+
+  const speed = 3.6 * delta;
+
+  forward.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+  right.set(Math.cos(yaw), 0, -Math.sin(yaw));
+
+  if (keys.forward) camera.position.addScaledVector(forward, speed);
+  if (keys.backward) camera.position.addScaledVector(forward, -speed);
+  if (keys.left) camera.position.addScaledVector(right, -speed);
+  if (keys.right) camera.position.addScaledVector(right, speed);
+
+  // Batasi pemain agar tidak menembus dinding.
+  camera.position.x = THREE.MathUtils.clamp(
+    camera.position.x, -10.2, 10.2
+  );
+
+  camera.position.z = THREE.MathUtils.clamp(
+    camera.position.z, -13.5, 11.5
+  );
+
+  camera.position.y = 1.65;
+
+  // Cari objek pameran yang terdekat.
+  nearby = null;
+  let nearest = Infinity;
+
+  for (const data of exhibits) {
+    const dx = camera.position.x - data.x;
+    const dz = camera.position.z - (data.z + 0.6);
+    const distance = Math.sqrt(dx * dx + dz * dz);
+
+    if (distance < nearest) {
+      nearest = distance;
+      nearby = data;
+    }
+  }
+
+  if (nearest < 3.5) {
+    interactButton.style.display = "block";
+    interactButton.textContent = "Lihat Informasi";
+  } else {
+    interactButton.style.display = "none";
+    nearby = null;
+  }
+}
+
+// ===================================================
+// TOMBOL ATAS
+// ===================================================
+
+document.getElementById("back").addEventListener("click", () => {
+  window.location.href = "https://culturalheritage.vercel.app/";
+});
+
+document.getElementById("fullscreen").addEventListener("click", async () => {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch (error) {
+    console.warn("Fullscreen tidak tersedia:", error);
+  }
+});
+
+// ===================================================
+// MULAI
+// ===================================================
+
+document.getElementById("start").addEventListener("click", () => {
+  started = true;
+  document.getElementById("intro").style.display = "none";
+
+  camera.position.set(0, 1.65, 8);
+  yaw = 0;
+  pitch = 0;
+  camera.rotation.set(0, 0, 0, "YXZ");
+});
+
+// ===================================================
+// UKURAN LAYAR DAN ANIMASI
+// ===================================================
+
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+renderer.setAnimationLoop(() => {
+  const delta = Math.min(clock.getDelta(), 0.05);
+
+  updateMovement(delta);
+  renderer.render(scene, camera);
+});
+
+document.getElementById("loading").style.display = "none";
+</script>
+</body>
+</html>
