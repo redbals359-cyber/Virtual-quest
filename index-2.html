@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cultural Heritage 3D — The Heights of Lemah Duwur</title>
+<style>
+  :root{--ink:#f4efe5;--muted:#c7c0b2;--gold:#d6ad68;--panel:rgba(20,25,29,.94);--line:rgba(255,255,255,.16)}
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#171b20;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  #scene{position:absolute;inset:0}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  .topbar{position:absolute;z-index:3;top:12px;left:12px;right:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;pointer-events:none}
+  .back-link{pointer-events:auto;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 12px;border-radius:12px;background:rgba(17,22,26,.88);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:12px;font-weight:750;white-space:nowrap}
+  .joystick{position:absolute;z-index:4;left:18px;bottom:84px;width:124px;height:124px;border-radius:50%;background:rgba(16,20,22,.48);border:2px solid rgba(255,255,255,.3);touch-action:none;user-select:none;display:flex;align-items:center;justify-content:center}
+  .stick{width:48px;height:48px;border-radius:50%;background:rgba(214,173,104,.92);border:2px solid #f4dfba;box-shadow:0 3px 12px #0008;pointer-events:none}
+  .joystick-label{position:absolute;left:0;right:0;bottom:-21px;text-align:center;font-size:10px;color:#eee5d6;text-shadow:0 1px 3px #000}
+  @media(max-width:520px){.joystick{width:108px;height:108px;left:12px;bottom:82px}.stick{width:43px;height:43px}.back-link{padding:8px 9px;font-size:11px}.brand{max-width:56%}.mission{max-width:34%}}
+  .brand,.mission,.control{pointer-events:auto;background:rgba(17,22,26,.82);border:1px solid var(--line);backdrop-filter:blur(8px);border-radius:14px}
+  .brand{padding:10px 13px;max-width:70%}
+  .brand strong{display:block;font-size:clamp(13px,2.5vw,18px);letter-spacing:.04em}
+  .brand span{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+  .mission{padding:9px 12px;font-size:12px;line-height:1.4;text-align:right;max-width:42%}
+  .mission b{color:var(--gold)}
+  .bottom{position:absolute;z-index:3;left:12px;right:12px;bottom:12px;display:flex;align-items:end;justify-content:space-between;gap:12px;pointer-events:none}
+  .hint{background:rgba(17,22,26,.8);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:11px;color:var(--muted);max-width:60%;pointer-events:auto}
+  .controls{display:flex;gap:8px;pointer-events:auto}
+  button{font:inherit;cursor:pointer}
+  .control{border:1px solid var(--line);color:var(--ink);padding:11px 13px;min-height:44px;font-weight:650}
+  .control:active{transform:scale(.97)}
+  #homeBtn{background:var(--gold);color:#211b12;border-color:transparent}
+  #modal{position:absolute;z-index:10;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.72)}
+  #modal.open{display:flex}
+  .modal-card{width:min(760px,100%);max-height:92%;overflow:auto;background:#f5f0e7;color:#26241f;border-radius:18px;box-shadow:0 18px 70px #0008}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px 8px}
+  .modal-head h2{font-size:clamp(18px,4vw,25px);margin:0}
+  #closeModal{border:0;border-radius:10px;background:#e4dccd;color:#29251f;min-width:42px;min-height:42px;font-size:22px}
+  #realImage{display:block;width:calc(100% - 32px);max-height:52vh;object-fit:contain;margin:8px 16px;background:#ddd4c5;border-radius:12px}
+  .caption{padding:0 16px 16px}
+  .caption p{margin:8px 0;line-height:1.55;font-size:14px}
+  .tag{display:inline-block;border:1px solid #d5c7ad;color:#6b512c;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700}
+  #startScreen{position:absolute;z-index:5;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(140deg,rgba(13,18,22,.92),rgba(31,33,31,.82))}
+  .start-card{width:min(560px,100%);padding:clamp(20px,5vw,36px);border:1px solid var(--line);border-radius:22px;background:rgba(20,25,29,.88);text-align:center}
+  .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:800}
+  .start-card h1{font-size:clamp(26px,6vw,43px);line-height:1.08;margin:12px 0}
+  .start-card p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 auto 20px;max-width:440px}
+  #startBtn{background:var(--gold);color:#211b12;border:0;border-radius:12px;padding:13px 22px;font-weight:800;min-height:48px}
+  .note{font-size:11px!important;margin-top:14px!important}
+  #loading{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);background:#111a;padding:10px 14px;border-radius:10px;font-size:12px;display:none}
+  @media(max-width:520px){.brand{max-width:64%;padding:9px 10px}.brand span{max-width:190px}.mission{font-size:10px;padding:8px;max-width:40%}.bottom{align-items:end}.hint{max-width:56%;font-size:10px}.control{padding:10px;font-size:12px}.controls{gap:5px}}
+</style>
+</head>
+<body>
+<div id="scene" aria-label="Museum 3D interaktif"></div>
+<div class="topbar">
+  <a class="back-link" href="https://culturalquest.vercel.app/" aria-label="Kembali ke Cultural Quest">← Back</a>
+  <div class="brand"><strong>CULTURAL HERITAGE <span style="display:inline;color:#d6ad68">3D</span></strong><span>The Heights of Lemah Duwur · Museum Digital</span></div>
+  <div class="mission"><b>JELAJAHI MUSEUM</b><br>Ketuk salah satu objek 3D untuk melihat foto aslinya.</div>
+</div>
+<div class="bottom">
+  <div class="hint">🖱️ Geser untuk memutar pandangan · Cubit/scroll untuk zoom · Ketuk objek pameran</div>
+  <div class="controls">
+    <button class="control" id="resetBtn" type="button">↻ Sudut awal</button>
+    <button class="control" id="homeBtn" type="button">Menu</button>
+  </div>
+</div>
+<div id="loading">Memuat museum 3D…</div>
+<div class="joystick" id="joystick" aria-label="Analog untuk menggerakkan karakter"><div class="stick" id="stick"></div><div class="joystick-label">GERAKKAN KARAKTER</div></div>
+<div id="startScreen">
+  <div class="start-card">
+    <div class="eyebrow">Virtual Heritage Experience</div>
+    <h1>The Heights of<br>Lemah Duwur</h1>
+    <p>Jelajahi museum 3D sederhana tentang Candi Lemah Duwur. Pilih objek pameran untuk membuka foto asli dan membaca informasi singkatnya.</p>
+    <button id="startBtn" type="button">Masuk Museum</button>
+    <p class="note">Gunakan mode landscape jika ingin area museum terlihat lebih luas. Koneksi internet diperlukan untuk memuat Three.js dan foto dari GitHub.</p>
+  </div>
+</div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="modalTitle">Objek Museum</h2><button id="closeModal" type="button" aria-label="Tutup">×</button></div>
+    <img id="realImage" alt="Foto asli objek warisan budaya" src="">
+    <div class="caption"><span id="modalTag" class="tag">OBJEK PAMERAN</span><p id="modalText"></p><p id="imageStatus" style="font-size:12px;color:#6d6254"></p></div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const root = document.getElementById('scene');
+const startScreen = document.getElementById('startScreen');
+const modal = document.getElementById('modal');
+const loading = document.getElementById('loading');
+const imageEl = document.getElementById('realImage');
+const statusEl = document.getElementById('imageStatus');
+
+let scene, camera, renderer, controlsTarget, raycaster, pointer, player;
+let moveX=0, moveY=0, joystickActive=false, joystickPointer=null;
+let isDragging = false, lastX = 0, lastY = 0, pointerMoved = false;
+let yaw = 0.18, pitch = 0.28, radius = 10.5;
+const clickable = [];
+const textureLoader = new THREE.TextureLoader();
+
+const exhibits = [
+  {
+    id:'candi', title:'Candi Lemah Duwur', category:'SITUS BUDAYA',
+    image:'https://raw.githubusercontent.com/redbals359-cyber/culturalquest/main/Candi%20lemah%20duwur.png',
+    description:'Objek utama pengenalan situs Lemah Duwur di Desa Pamotan, Kecamatan Porong, Kabupaten Sidoarjo. Amati foto asli untuk mengenali kondisi situs yang didokumentasikan.'
+  },
+  {
+    id:'bata', title:'Bata Merah Kuno', category:'MATERIAL BANGUNAN',
+    image:'https://raw.githubusercontent.com/redbals359-cyber/culturalquest/main/Batu%20bata.png',
+    description:'Pameran ini menyoroti bata merah yang menjadi salah satu ciri visual penting pada tinggalan bangunan. Informasi ukuran, usia, dan fungsi khusus perlu merujuk pada sumber penelitian yang terverifikasi.'
+  },
+  {
+    id:'struktur', title:'Struktur Bangunan', category:'JEJAK ARSITEKTUR',
+    image:'https://raw.githubusercontent.com/redbals359-cyber/culturalquest/main/Struktur%20bangunan%20.png',
+    description:'Perhatikan susunan dan bentuk yang tampak pada dokumentasi. Foto digunakan sebagai bahan pengamatan, bukan sebagai klaim rekonstruksi bentuk asli bangunan secara utuh.'
+  }
+];
+
+function init(){
+  loading.style.display='block';
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x20282b);
+  scene.fog = new THREE.Fog(0x20282b, 16, 32);
+
+  camera = new THREE.PerspectiveCamera(48, root.clientWidth/root.clientHeight, 0.1, 100);
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
+  renderer.setSize(root.clientWidth, root.clientHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  root.appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0xdce7ee, 0x4b3426, 2.0));
+  const key = new THREE.DirectionalLight(0xffe2b4, 3.0);
+  key.position.set(-4,8,5); key.castShadow=true; scene.add(key);
+  const fill = new THREE.PointLight(0xc4d9e4, 30, 18);
+  fill.position.set(5,4,-4); scene.add(fill);
+
+  // Ruang museum
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(24,24), new THREE.MeshStandardMaterial({color:0x6f6253, roughness:.86}));
+  floor.rotation.x=-Math.PI/2; floor.position.y=-.04; floor.receiveShadow=true; scene.add(floor);
+  const grid = new THREE.GridHelper(24,24,0x8d7b63,0x776957); grid.position.y=-.025; scene.add(grid);
+  const wallMat = new THREE.MeshStandardMaterial({color:0x343d3e, roughness:.95});
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(18,5,.35),wallMat); backWall.position.set(0,2.45,-7); backWall.receiveShadow=true; scene.add(backWall);
+  const leftWall = new THREE.Mesh(new THREE.BoxGeometry(.35,5,14),wallMat); leftWall.position.set(-9,2.45,0); scene.add(leftWall);
+  const rightWall = new THREE.Mesh(new THREE.BoxGeometry(.35,5,14),wallMat); rightWall.position.set(9,2.45,0); scene.add(rightWall);
+  // Lis dinding dan lampu
+  const trimMat = new THREE.MeshStandardMaterial({color:0xb38b55,metalness:.35,roughness:.5});
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(18,.12,.42),trimMat); trim.position.set(0,4.85,-6.78); scene.add(trim);
+  for(let x=-6;x<=6;x+=4){
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(1.2,.08,.35),new THREE.MeshStandardMaterial({color:0xf1d9a5,emissive:0x9b6d2d,emissiveIntensity:.6}));
+    lamp.position.set(x,4.65,-6.65); scene.add(lamp);
+    const spot = new THREE.PointLight(0xffdca0,18,7); spot.position.set(x,4.1,-4.6); scene.add(spot);
+  }
+
+  // Judul dinding berbentuk papan, tanpa font eksternal
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(5.6,1.05,.18),new THREE.MeshStandardMaterial({color:0x252b2b,roughness:.7}));
+  sign.position.set(0,3.45,-6.72); scene.add(sign);
+  addTextLabel('LEMAH DUWUR',0,3.52,-6.60,0.43,0xd9b16e);
+  addTextLabel('LOCAL HERITAGE MUSEUM',0,3.12,-6.59,0.16,0xe9e1d2);
+
+  // Karakter 3D sederhana yang dapat digerakkan
+  player = makePlayer();
+  scene.add(player);
+
+  // Tiga pedestal dengan panel foto asli dan label
+  const positions=[[-5.2,0,-2.1],[0,0,-2.8],[5.2,0,-2.1]];
+  exhibits.forEach((item,i)=>makeExhibit(item,positions[i][0],positions[i][1],positions[i][2],i));
+  // bangku sederhana di tengah depan
+  const benchMat=new THREE.MeshStandardMaterial({color:0x493326,roughness:.8});
+  const seat=new THREE.Mesh(new THREE.BoxGeometry(2.1,.18,.55),benchMat);seat.position.set(0,.7,2.1);seat.castShadow=true;scene.add(seat);
+  for(const x of [-.8,.8]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.12,.7,.12),benchMat);leg.position.set(x,.34,2.1);scene.add(leg)}
+
+  raycaster = new THREE.Raycaster(); pointer = new THREE.Vector2();
+  setCamera();
+  renderer.domElement.addEventListener('pointerdown',onPointerDown);
+  renderer.domElement.addEventListener('pointermove',onPointerMove);
+  renderer.domElement.addEventListener('pointerup',onPointerUp);
+  renderer.domElement.addEventListener('pointercancel',onPointerUp);
+  renderer.domElement.addEventListener('wheel',onWheel,{passive:false});
+  window.addEventListener('resize',onResize);
+  setupJoystick();
+  window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a')moveX=-1;if(e.key==='ArrowRight'||e.key.toLowerCase()==='d')moveX=1;if(e.key==='ArrowUp'||e.key.toLowerCase()==='w')moveY=-1;if(e.key==='ArrowDown'||e.key.toLowerCase()==='s')moveY=1;});
+  window.addEventListener('keyup',e=>{if(['ArrowLeft','ArrowRight','a','d','ArrowUp','ArrowDown','w','s'].includes(e.key)) {if(e.key==='ArrowLeft'||e.key==='ArrowRight'||['a','d'].includes(e.key.toLowerCase()))moveX=0;if(e.key==='ArrowUp'||e.key==='ArrowDown'||['w','s'].includes(e.key.toLowerCase()))moveY=0;}});
+  document.getElementById('startBtn').addEventListener('click',()=>{startScreen.style.display='none';});
+  document.getElementById('closeModal').addEventListener('click',closeModal);
+  modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+  document.getElementById('resetBtn').addEventListener('click',()=>{yaw=.18;pitch=.28;radius=10.5;setCamera()});
+  document.getElementById('homeBtn').addEventListener('click',()=>{closeModal();startScreen.style.display='flex'});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+  loading.style.display='none';
+  animate();
+}
+
+function addTextLabel(text,x,y,z,size,color){
+  const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=180;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,1024,180);
+  ctx.font=`700 ${Math.round(size*220)}px system-ui, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#'+color.toString(16).padStart(6,'0');ctx.fillText(text,512,90);
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(text.length>18?3.8:3.3,.58),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));
+  mesh.position.set(x,y,z);scene.add(mesh);return mesh;
+}
+
+function makeExhibit(item,x,y,z,index){
+  const pedestalMat=new THREE.MeshStandardMaterial({color:index===1?0x6b5540:0x4b4e4a,roughness:.72});
+  const base=new THREE.Mesh(new THREE.BoxGeometry(2.15,.8,1.5),pedestalMat);
+  base.position.set(x,.4,z);base.castShadow=true;base.receiveShadow=true;scene.add(base);
+  const top=new THREE.Mesh(new THREE.BoxGeometry(2.28,.12,1.62),new THREE.MeshStandardMaterial({color:0xc1a16d,metalness:.18,roughness:.55}));
+  top.position.set(x,.86,z);top.castShadow=true;scene.add(top);
+  // panel 3D yang bisa dipilih; klik panel atau pedestal
+  const panelMat=new THREE.MeshStandardMaterial({color:0x252b2b,roughness:.6,emissive:0x15191a});
+  const panel=new THREE.Mesh(new THREE.BoxGeometry(2.05,1.55,.14),panelMat);
+  panel.position.set(x,2.05,z-.45);panel.castShadow=true;scene.add(panel);
+  const frame=new THREE.Mesh(new THREE.BoxGeometry(1.78,1.12,.05),new THREE.MeshStandardMaterial({color:0x9b7748,metalness:.35,roughness:.45}));
+  frame.position.set(x,2.12,z-.36);scene.add(frame);
+  // Gunakan foto asli dari GitHub sebagai tekstur panel pameran.
+  const tex=textureLoader.load(item.image, t=>{t.colorSpace=THREE.SRGBColorSpace;}, undefined, ()=>{console.warn('Tekstur gagal dimuat:',item.image)});
+  tex.colorSpace=THREE.SRGBColorSpace;
+  const imageBoard=new THREE.Mesh(new THREE.PlaneGeometry(1.62,1.01),new THREE.MeshBasicMaterial({map:tex, color:0xffffff}));
+  imageBoard.position.set(x,2.12,z-.325);scene.add(imageBoard);
+  const label=makeLabelMesh(item.title,x,1.15,z+.05);scene.add(label);
+  const glow=new THREE.Mesh(new THREE.BoxGeometry(2.3,2.6,1.8),new THREE.MeshBasicMaterial({color:0xd6ad68,transparent:true,opacity:.0,wireframe:true}));
+  glow.position.set(x,1.45,z-.1);scene.add(glow);
+  [base,top,panel,frame,imageBoard,label,glow].forEach(obj=>{obj.userData.exhibit=item;clickable.push(obj)});
+}
+
+function makeLabelMesh(text,x,y,z){
+  const c=document.createElement('canvas');c.width=768;c.height=150;const ctx=c.getContext('2d');
+  ctx.fillStyle='#252b2b';ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#f3e8d3';ctx.font='bold 38px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  const shown=text.length>25?text.slice(0,23)+'…':text;ctx.fillText(shown,384,75);
+  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(2.05,.4),new THREE.MeshBasicMaterial({map:tex}));
+  mesh.position.set(x,y,z+.77);return mesh;
+}
+
+function setCamera(){
+  const target=player ? new THREE.Vector3(player.position.x,1.15,player.position.z-1.15) : new THREE.Vector3(0,1.2,-1.2);
+  camera.position.set(target.x+radius*Math.sin(yaw)*Math.cos(pitch),target.y+radius*Math.sin(pitch),target.z+radius*Math.cos(yaw)*Math.cos(pitch));
+  camera.lookAt(target);
+}
+function onPointerDown(e){isDragging=true;pointerMoved=false;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture?.(e.pointerId)}
+function onPointerMove(e){
+  if(!isDragging)return;
+  const dx=e.clientX-lastX,dy=e.clientY-lastY;
+  if(Math.abs(dx)+Math.abs(dy)>4)pointerMoved=true;
+  yaw-=dx*.006;pitch=Math.max(-.05,Math.min(.8,pitch+dy*.004));lastX=e.clientX;lastY=e.clientY;setCamera();
+}
+function onPointerUp(e){
+  if(!isDragging)return;isDragging=false;
+  if(!pointerMoved && startScreen.style.display==='none' && !modal.classList.contains('open')){
+    const rect=renderer.domElement.getBoundingClientRect();
+    pointer.x=((e.clientX-rect.left)/rect.width)*2-1;
+    pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;
+    raycaster.setFromCamera(pointer,camera);
+    const hits=raycaster.intersectObjects(clickable,false);
+    if(hits.length){const item=hits[0].object.userData.exhibit;if(item)openExhibit(item)}
+  }
+}
+function onWheel(e){e.preventDefault();radius=Math.max(6.8,Math.min(15,radius+e.deltaY*.012));setCamera()}
+function onResize(){if(!camera||!renderer)return;camera.aspect=root.clientWidth/root.clientHeight;camera.updateProjectionMatrix();renderer.setSize(root.clientWidth,root.clientHeight)}
+function openExhibit(item){
+  document.getElementById('modalTitle').textContent=item.title;
+  document.getElementById('modalTag').textContent=item.category;
+  document.getElementById('modalText').textContent=item.description;
+  statusEl.textContent='Memuat foto asli dari repositori proyek…';
+  imageEl.src=item.image;
+  imageEl.alt='Foto asli: '+item.title;
+  imageEl.onload=()=>{statusEl.textContent='Foto asli berhasil dimuat dari repositori Cultural Quest.'};
+  imageEl.onerror=()=>{statusEl.textContent='Foto tidak berhasil dimuat. Periksa nama file di GitHub atau ganti URL pada bagian data exhibits di index.html.'};
+  modal.classList.add('open');
+}
+function closeModal(){modal.classList.remove('open');imageEl.src=''}
+function makePlayer(){
+  const group=new THREE.Group();
+  const skin=new THREE.MeshStandardMaterial({color:0xc98f65,roughness:.8});
+  const shirt=new THREE.MeshStandardMaterial({color:0x3d7880,roughness:.85});
+  const pants=new THREE.MeshStandardMaterial({color:0x303b4b,roughness:.9});
+  const shoes=new THREE.MeshStandardMaterial({color:0x252525,roughness:.9});
+  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.23,.48,4,8),shirt);torso.position.y=.98;torso.castShadow=true;group.add(torso);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.19,16,12),skin);head.position.y=1.43;head.castShadow=true;group.add(head);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.195,16,8,0,Math.PI*2,0,Math.PI*.58),new THREE.MeshStandardMaterial({color:0x29231f}));hair.position.y=1.49;hair.castShadow=true;group.add(hair);
+  for(const x of [-.12,.12]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.14,.48,.17),pants);leg.position.set(x,.39,0);leg.castShadow=true;group.add(leg);const shoe=new THREE.Mesh(new THREE.BoxGeometry(.16,.1,.25),shoes);shoe.position.set(x,.1,-.04);shoe.castShadow=true;group.add(shoe);}
+  for(const x of [-.29,.29]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.075,.36,3,6),shirt);arm.position.set(x,1.02,0);arm.rotation.z=x<0?-.12:.12;arm.castShadow=true;group.add(arm);}
+  group.position.set(0,0,4.2);group.userData.walkTime=0;return group;
+}
+function setupJoystick(){
+  const base=document.getElementById('joystick'), stick=document.getElementById('stick');
+  const update=e=>{const r=base.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=r.width*.32,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max;}moveX=dx/max;moveY=dy/max;stick.style.transform=`translate(${dx}px,${dy}px)`;};
+  base.addEventListener('pointerdown',e=>{e.preventDefault();joystickActive=true;joystickPointer=e.pointerId;base.setPointerCapture(e.pointerId);update(e)});
+  base.addEventListener('pointermove',e=>{if(joystickActive&&e.pointerId===joystickPointer){e.preventDefault();update(e)}});
+  const stop=e=>{if(e.pointerId!==joystickPointer)return;joystickActive=false;joystickPointer=null;moveX=0;moveY=0;stick.style.transform='translate(0,0)'};
+  base.addEventListener('pointerup',stop);base.addEventListener('pointercancel',stop);
+}
+function animate(){requestAnimationFrame(animate);
+  if(player && !modal.classList.contains('open') && startScreen.style.display==='none') {
+    const speed=.055;player.position.x+=moveX*speed;player.position.z+=moveY*speed;
+    player.position.x=Math.max(-7.5,Math.min(7.5,player.position.x));player.position.z=Math.max(-5.6,Math.min(5.7,player.position.z));
+    if(Math.abs(moveX)+Math.abs(moveY)>.08){player.rotation.y=Math.atan2(moveX,-moveY);player.userData.walkTime+=.18;player.children.forEach((part,i)=>{if(i>=4&&i<=5)part.rotation.x=Math.sin(player.userData.walkTime+(i===4?0:Math.PI))*.35;});}
+    setCamera();
+  }
+  renderer.render(scene,camera)
+}
+init();
+</script>
+</body>
+</html>
